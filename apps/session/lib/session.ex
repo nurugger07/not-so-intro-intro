@@ -1,18 +1,29 @@
 defmodule Session do
-  @moduledoc """
-  Documentation for Session.
-  """
 
-  @doc """
-  Hello world.
+  alias Background.Messenger
 
-  ## Examples
+  @node Application.get_env(:session, :background_node)
+  @messenger {Messenger, @node}
 
-      iex> Session.hello
-      :world
+  def start,
+    do: GenServer.cast(@messenger, :start)
 
-  """
-  def hello do
-    :world
+  def restart,
+    do: GenServer.cast(@messenger, :restart)
+
+  def pause,
+    do: GenServer.cast(@messenger, :pause)
+
+  def current_step,
+    do: GenServer.cast(@messenger, :current_step)
+
+  def calculate_sequence(length, count \\ 1) do
+    code = Sequencer.get_code()
+    Enum.map(1..count, fn(_n) ->
+      Task.async(fn() ->
+        GenServer.cast(@messenger, {:start_calculation, length, code})
+      end)
+    end)
   end
+
 end
