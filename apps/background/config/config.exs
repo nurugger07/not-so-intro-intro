@@ -1,4 +1,4 @@
 use Mix.Config
 
 config :background,
-  session_node: :"session@brooke-air"
+  session_node: :"session@HULK"

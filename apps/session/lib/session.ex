@@ -8,6 +8,9 @@ defmodule Session do
   def start,
     do: GenServer.cast(@messenger, :start)
 
+  def next,
+    do: GenServer.cast(@messenger, :start)
+
   def restart,
     do: GenServer.cast(@messenger, :restart)
 
@@ -24,6 +27,8 @@ defmodule Session do
         GenServer.cast(@messenger, {:start_calculation, length, code})
       end)
     end)
+
+    :ok
   end
 
 end

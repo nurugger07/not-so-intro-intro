@@ -9,7 +9,13 @@ defmodule Session.MailBox do
     {:noreply, state}
   end
 
+  def handle_info({:example, "", markdown}, state) do
+    IO.ANSI.Docs.print markdown
+    {:noreply, state}
+  end
+
   def handle_info({:example, heading, markdown}, state) do
+    IEx.Helpers.clear
     IO.ANSI.Docs.print_heading heading
     IO.ANSI.Docs.print markdown
     {:noreply, state}
