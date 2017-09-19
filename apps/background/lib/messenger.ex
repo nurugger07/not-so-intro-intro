@@ -5,7 +5,36 @@ defmodule Background.Messenger do
 
   alias Background.Message
 
-  @event_name "Denver Erlang & Elixir"
+  @steps %{
+    1 => %{name: "What Is Elixir?", doc: AboutElixir, sub_pages: []},
+    2 => %{name: "Basic Types & Curiosities", doc: BasicTypes, sub_pages: [
+              %{name: "", doc: BasicTypes.Atoms, timer: 10000},
+              %{name: "", doc: BasicTypes.Lists, timer: 10000}
+            ]},
+    3 => %{name: "Anonymous Functions", doc: AnonymousFunctions, sub_pages: []},
+    4 => %{name: "Grouping Code In Modules", doc: Modules, sub_pages: []},
+    5 => %{name: "Working with Workflows", doc: Workflows, sub_pages: []},
+    6 => %{name: "Agents & Tasks", doc: AgentsTasks, sub_pages: [
+              %{name: "Agents", doc: Agents, timer: 20000},
+            ]},
+    7 => %{name: "Graduating to Processes", doc: GenServers, sub_pages: [
+              %{name: "GenServer Callbacks", doc: GenServers.Callbacks, timer: 20000},
+              %{name: "Supervisors", doc: Supervisors, timer: 20000}
+            ]},
+    8 => %{name: "Message Passing & State", doc: ProcessState, sub_pages: [
+              %{name: "Needs More State", doc: MessagePassing, timer: 20000},
+            ]},
+    9 => %{name: "Hot Swapping Code", doc: HotSwap, sub_pages: []},
+    10 => %{name: "Code Loading @ Runtime", doc: CodeLoading, sub_pages: [
+               %{name: "Reading the Code", doc: ReadingCodeExample, timer: 20000},
+               %{name: "Loading the Code", doc: LoadingCodeExample, timer: 20000},
+             ]},
+    11 => %{name: "Bonus: Behaviors", doc: Behaviors, sub_pages: [
+               %{name: "Dependency Injection", doc: DependencyInjection, timer: 20000}
+             ]}
+  }
+
+  @event_name "Denver Erlang & Elixir Meetup"
   @node Application.get_env(:background, :session_node)
   @session {Session.MailBox, @node}
 
@@ -14,7 +43,7 @@ defmodule Background.Messenger do
 
   def init(_args) do
     send(self(), :starting_presentation)
-    {:ok, %{current_step: :intro, next_step: :what_is_elixir, paused: false}}
+    {:ok, %{current_step: :intro, next_step: 1, paused: false}}
   end
 
   def handle_info(:starting_presentation, state) do
@@ -27,79 +56,30 @@ defmodule Background.Messenger do
     :timer.sleep 5000
     send_doc("", Employment)
 
-    {:noreply, %{state|current_step: :intro, next_step: :what_is_elixir}}
+    {:noreply, %{state|current_step: :intro, next_step: 1}}
   end
 
-  def handle_info(:what_is_elixir, %{paused: false} = state) do
-    send_doc("What is Elixir?", WhatElixir)
-
-    {:noreply, %{state|current_step: :what_is_elixir, next_step: :first_example}}
+  def handle_info(9, state) do
+    send(self(), :bad_message)
+    {:noreply, state}
   end
 
-  def handle_info(:first_example, %{paused: false} = state) do
-    session_message("Basic Types & curiosities")
+  def handle_info(step, %{paused: false} = state) when is_integer(step) do
+    @steps[step]
+    session_message(@steps[step].name)
+    send_doc(@steps[step].name, @steps[step].doc)
 
-    send_doc("Basic Types", BasicTypes)
-    :timer.sleep(20000)
-    send_doc("", BasicTypes.Atoms)
-    :timer.sleep(20000)
-    send_doc("", BasicTypes.Lists)
+    for page <- @steps[step].sub_pages do
+      :timer.sleep(page.timer)
+      send_doc(page.name, page.doc)
+    end
 
-    {:noreply, %{state|current_step: :first_example, next_step: :second_example}}
-  end
-
-  def handle_info(:second_example, %{paused: false} = state) do
-    session_message("Anonymous Functions")
-
-    send_doc("Anonymous Functions", FunctionTypes)
-
-    {:noreply, %{state|current_step: :second_example, next_step: :third_example}}
-  end
-
-  def handle_info(:third_example, %{paused: false} = state) do
-    session_message("Grouping Code in Modules")
-
-    send_doc("Grouping Code in Modules", Modules)
-
-    {:noreply, %{state|current_step: :third_example, next_step: :fourth_example, paused: false}}
-  end
-
-  def handle_info(:fourth_example, %{paused: false} = state) do
-    session_message("Graduating to Processes")
-
-    send_doc("Graduating to Processes", Processes.GenServers)
-    :timer.sleep 30000
-    send_doc("GenServer Callbacks", Processes.GenServers.Callbacks)
-    :timer.sleep 20000
-    send_doc("Supervisors", Processes.Supervisors)
-
-    {:noreply, %{state|current_step: :fourth_example, next_step: :fifth_example}}
-  end
-
-  def handle_info(:fifth_example, %{paused: false} = state) do
-    session_message("Message Passing & State")
-
-    send_doc("Message Passing & State", ProcessState)
-    :timer.sleep 30000
-    send_doc("Message Passing & State", MessagePassing)
-
-    {:noreply, %{state|current_step: :fifth_example, next_step: :sixth_example}}
-  end
-
-  def handle_info(:sixth_example, %{paused: false} = state) do
-    session_message("Hot Swapping Code")
-
-    send_doc("Hot Swapping Code", HotSwap)
-
-    {:noreply, %{state|current_step: :sixth_example, next_step: :seventh_example}}
-  end
-
-  def handle_info(:seventh_example, %{paused: false} = state) do
-    session_message("Code Loading on a remote node")
-
-    send_doc("Code Loading @ Runtime", CodeLoading)
-
-    {:noreply, %{state|current_step: :seventh_example, next_step: :done}}
+    case @steps[step + 1] do
+      nil ->
+        {:noreply, %{state|current_step: step, next_step: :done}}
+      _ ->
+        {:noreply, %{state|current_step: step, next_step: step + 1}}
+    end
   end
 
   def handle_info(:done, %{paused: false} = state) do
@@ -144,6 +124,12 @@ defmodule Background.Messenger do
 
   def handle_cast(:current_step, state) do
     session_message("The current step is #{state.current_step}")
+
+    {:noreply, state}
+  end
+
+  def handle_cast({:start_calculation, length, _code}, state) when length >= 1000000 do
+    session_message("Now you are pushing it. If you want to continue better increase my timeout. But really? Is that necessary to prove a point?")
 
     {:noreply, state}
   end
