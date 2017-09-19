@@ -23,6 +23,7 @@ defmodule Intro do
 
       Twitter: @johnny_rugger & @elixirfountain\n
       Podcast: http://soundcloud.com/elixirfountain
+      Conference: http://elixirdaze.com
 
   """
 
@@ -92,6 +93,29 @@ defmodule BasicTypes do
 
       `number < atom < reference < function < port < pid < tuple < map < list < bitstring`
 
+  * Although its a dynamically typed language we can use typespecs to declare types & specifications
+
+    > They provide documentation (for example, tools such as ExDoc show type specifications in the documentation)
+    > They’re used by tools such as Dialyzer, that can analyze code with typespec to find type inconsistencies
+      and possible bugs
+
+  ## Examples
+
+      defmodule Buffalo.Struct do
+
+        defstruct [:id, :name]
+
+        @type t :: %Buffallo.Struct{}
+
+        @spec build(params :: Map) :: {:ok, Map.t} | {:error, reason :: Binary}
+        def build(params) do
+           # Do something that returns `{:ok, %Buffallo{}}` or `{:error, reason}`
+        end
+
+      end
+
+  https://hexdocs.pm/elixir/typespecs.html
+
   """
 end
 
@@ -110,6 +134,15 @@ defmodule BasicTypes.Atoms do
       iex> String.to_existing_atom("blah")
       ** (ArgumentError) argument error
         :erlang.binary_to_existing_atom("blah", :utf8)
+
+  * One other note about atoms, the name of a module is just an atom
+
+  ## Examples
+
+      iex(16)> is_atom(String)
+      true
+
+  https://hexdocs.pm/elixir/Atom.html
 
   """
 end
@@ -130,6 +163,28 @@ defmodule BasicTypes.Lists do
       [1, 2, 3]
       iex> first
       1
+
+  Separating the head from the rest of the list makes recurrsive calls. You can even grab multiple
+  values from the list at a time
+
+  ## Examples
+
+      def fibonacci(length),
+        do: calculate(length, [])
+
+      defp calculate(length, []),
+        do: calculate(length - 1, [0])
+
+      defp calculate(length, [0]),
+        do: calculate(length - 1, [1, 0])
+
+      defp calculate(length, [a, b | _rest] = acc) when length > 0,
+        do: calculate(length - 1, [a + b | acc])
+
+      defp calculate(0, acc),
+        do: Enum.reverse(acc)
+
+  https://hexdocs.pm/elixir/List.html
 
   """
 end
@@ -166,6 +221,8 @@ defmodule AnonymousFunctions do
       iex> func.(4)
       2
 
+  ## Examples
+
   You can pipe directly to anonymous too!
 
   ## Examples
@@ -175,6 +232,7 @@ defmodule AnonymousFunctions do
 
       # Or the short hand:
       iex> %{first: "Bob", last: "Dobbs"} |> (&("\#{&1.first} \#{&1.last}")).()
+
   """
 end
 
@@ -212,6 +270,21 @@ defmodule Modules do
       IO.puts Math.zero?([1, 2, 3]) #=> ** (FunctionClauseError)
       IO.puts Math.zero?(0.0)       #=> ** (FunctionClauseError)
 
+
+  Functions can also be passed as arguments. Let's take our Math module we can iterate over a
+  list of numbers and check for zero or with an anonymous function.
+
+  ## Examples
+
+     iex> Enum.map([0,1,2,3,4], &Math.zero?/1)
+     [true, false, false, false, false]
+
+     iex> rfn = fn(n) -> is_integer(n) end)
+     iex> Enum.map([1,2,"T"], rfn)
+     [true, true, false]
+
+  https://hexdocs.pm/elixir/Module.html
+
   """
 end
 
@@ -219,6 +292,11 @@ defmodule Workflows do
   @moduledoc """
 
   Building workflows and recovering from errors using the `with/1`
+
+  The `with/1` statement matches the value produced on the right with the pattern on the left.
+  If there is a match then the next function is called. If the value on the right does not
+  match the pattern then the non-matching value is returned. You can add additional patterns
+  following an else to handle non-matching values.
 
   ## Examples
 
@@ -232,6 +310,7 @@ defmodule Workflows do
           result
         else
           error ->
+            # Do something to deal with the error
             {:error, error}
         end
       end
@@ -241,17 +320,24 @@ defmodule Workflows do
 
   ## Examples: From 1.3 Docs
 
-      def MyAppWeb.PageController do
-        alias MyApp.CMS
+      defmodule ApiWeb.Api.V1.ResourceController do
+        use ApiWeb, :controller
 
-        action_fallback MyAppWeb.FallbackController
+        action_fallback ApiWeb.Api.V1.FallbackController
 
-        def show(conn, %{"id" => id}) do
-          with {:ok, page} <- CMS.get_page(id, conn.assigns.current_user) do
-          render(conn, "show.html", page: page)
+        def action(%{params: %{"type" => type}} = conn, _opts) do
+          params = conn.params["data"] || conn.params
+
+          with {:ok, handler} <- handler_for(type),
+               {:ok, view_module} <- view_for(type) do
+
+            conn = put_view(conn, view_module)
+            apply(__MODULE__, action_name(conn), [conn, params, handler])
+          end
         end
       end
 
+  https://hexdocs.pm/elixir/Kernel.SpecialForms.html#with/1
 
   * Saga Pattern for distributed workflows
   https://soundcloud.com/elixirfountain/episode-069-the-saga-of-distributed-systems-and-bbq-with-mark-allen
@@ -290,6 +376,7 @@ defmodule AgentsTasks do
       iex> Task.await(task)
       55
 
+  https://hexdocs.pm/elixir/Task.html
 
   """
 end
@@ -316,6 +403,10 @@ defmodule Agents do
           Agent.update(pid, &(Map.put(&1, 1, item)))
         end
       end
+
+  * When to use Agents??? Prototyping, smaller caches, etc
+
+  https://hexdocs.pm/elixir/Agent.html
 
   """
 end
@@ -349,6 +440,8 @@ defmodule GenServers do
   Once the server is started the registered name or pid can be used to communicate with
   the GenServer.
 
+  * :gproc & Registry both allow you to track pids and call by an identifier
+
   """
 end
 
@@ -365,6 +458,8 @@ defmodule GenServers.Callbacks do
   2. `handle_cast/2` - used for asynchronous requests
   3. `handle_info/2` - all other messages a server may receive.
 
+  https://hexdocs.pm/elixir/GenServer.html
+
   """
 end
 
@@ -376,7 +471,6 @@ defmodule Supervisors do
   supervision tree. Supervision trees are a nice way to structure fault-tolerant applications.
 
   * Module-based supervisors
-
 
   ## Examples
 
@@ -399,6 +493,15 @@ defmodule Supervisors do
 
       end
 
+  * Restart values
+
+  1. `:permanent` - the child process is always restarted (default)
+  2. `:temporary` - the child process is never restarted
+  3. `:transient` - the child process is restarted only if it terminates abnormally
+
+
+  https://hexdocs.pm/elixir/Supervisor.Spec.html
+
   """
 end
 
@@ -418,7 +521,7 @@ defmodule ProcessState do
         do: {:ok, %{current_step: :intro, next_step: :first_example, paused: true}}
 
       def handle_info(:intro, %{paused: false} = state) do
-        send_doc("Denver Erlang & Elixir Meetup", Intro)
+        send_doc("Buffallo Elixir/Phoenix Meetup", Intro)
 
         {:noreply, %{state|current_step: :intro, next_step: :what_is_elixir}}
       end
@@ -428,6 +531,8 @@ end
 
 defmodule MessagePassing do
   @moduledoc """
+
+  # How can we send messages?
 
   There are a number of ways to send messages to processes but the following will be used
   most in the upcoming examples.
