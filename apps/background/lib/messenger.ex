@@ -59,10 +59,13 @@ defmodule Background.Messenger do
     {:noreply, %{state|current_step: :intro, next_step: 1}}
   end
 
-  # def handle_info(9, state) do
-  #   send(self(), :bad_message)
-  #   {:noreply, state}
-  # end
+  @doc """
+  This is only here for the "HotSwap" slide. If not showing that slide then this can be removed.
+  """
+  def handle_info(9, state) do
+    send(self(), :bad_message)
+    {:noreply, state}
+  end
 
   def handle_info(step, %{paused: false} = state) when is_integer(step) do
     @steps[step]
