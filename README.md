@@ -1,4 +1,4 @@
-# Ndc
+# Not So Intro, Intro
 
 ## How to use the presentation
 
@@ -32,7 +32,7 @@ iex> Session.next
 When you get to the slide 9 and hear "I have no idea..." message. Go to the background app window and enter:
 
 ```
-iex> :sys.suspend(Bakcground.Messenger)
+iex> :sys.suspend(Background.Messenger)
 ```
 
 and in the code of "lib/messenger.ex" comment out the folloing lines:
