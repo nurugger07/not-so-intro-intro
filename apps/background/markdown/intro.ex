@@ -21,7 +21,7 @@ defmodule Intro do
 
   ## Notes:
 
-      Twitter: @johnny_rugger & @elixirfountain\n
+      Twitter: @johnny_rugger & @elixirfountain & @elixirdaze\n
       Podcast: http://soundcloud.com/elixirfountain
       Conference: http://elixirdaze.com
 
@@ -93,10 +93,10 @@ defmodule BasicTypes do
 
       `number < atom < reference < function < port < pid < tuple < map < list < bitstring`
 
-  * Although its a dynamically typed language we can use typespecs to declare types & specifications
+  * Although it's a dynamically typed language we can use typespecs to declare types & specifications
 
-    > They provide documentation (for example, tools such as ExDoc show type specifications in the documentation)
-    > They’re used by tools such as Dialyzer, that can analyze code with typespec to find type inconsistencies
+    1. They provide documentation (for example, tools such as ExDoc show type specifications in the documentation)
+    2. They’re used by tools such as Dialyzer, that can analyze code with typespec to find type inconsistencies
       and possible bugs
 
   ## Examples
@@ -105,11 +105,11 @@ defmodule BasicTypes do
 
         defstruct [:id, :name]
 
-        @type t :: %Buffallo.Struct{}
+        @type t :: %Buffalo.Struct{}
 
         @spec build(params :: Map) :: {:ok, Map.t} | {:error, reason :: Binary}
         def build(params) do
-           # Do something that returns `{:ok, %Buffallo{}}` or `{:error, reason}`
+           # Do something that returns `{:ok, %Buffalo{}}` or `{:error, reason}`
         end
 
       end
@@ -521,7 +521,7 @@ defmodule ProcessState do
         do: {:ok, %{current_step: :intro, next_step: :first_example, paused: true}}
 
       def handle_info(:intro, %{paused: false} = state) do
-        send_doc("Buffallo Elixir/Phoenix Meetup", Intro)
+        send_doc("Buffalo Elixir/Phoenix Meetup", Intro)
 
         {:noreply, %{state|current_step: :intro, next_step: :what_is_elixir}}
       end
